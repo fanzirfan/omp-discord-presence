@@ -8,14 +8,6 @@ export interface Clock {
   schedule(delayMs: number, fn: () => void): CancelHandle;
 }
 
-export const systemClock = (): Clock => ({
-  now: () => Date.now() as EpochMillis,
-  schedule: (delayMs, fn) => {
-    const handle = setTimeout(fn, delayMs);
-    return () => clearTimeout(handle);
-  },
-});
-
 export interface PresenceScheduler {
   request(desired: DesiredPresence): void;
   stop(): void;

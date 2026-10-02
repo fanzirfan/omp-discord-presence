@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import {
   type ActivityState,
   type ToolInput,
@@ -7,12 +7,13 @@ import {
   toActivity,
 } from "./activity.ts";
 import { renderCard } from "./render.ts";
-import { type PresenceScheduler, createScheduler, systemClock } from "./scheduler.ts";
+import { type Clock, type PresenceScheduler, createScheduler } from "./scheduler.ts";
 import { createXhayperTransport } from "./transport.ts";
 import { type PresenceLink, createPresenceLink } from "./link.ts";
 import { loadGlobalConfig, loadProjectConfig, resolveEnablement } from "./config.ts";
 import {
   type DesiredPresence,
+  type EpochMillis,
   type RuntimeToggle,
   type SessionContext,
   MIN_INTERVAL_MS,
@@ -36,16 +37,33 @@ const toolInput = (args: unknown): ToolInput => {
   };
 };
 
-export default function registerDiscordPresence(pi: ExtensionAPI): void {
+// OMP-managed clock: ctx.setTimeout contains throws and is cleared on
+// session_shutdown. Raw timers escape extension isolation and can take down
+// the host session, so the scheduler is never given one here.
+const ctxClock = (ctx: ExtensionContext): Clock => ({
+  now: () => Date.now() as EpochMillis,
+  schedule: (delayMs, fn) => {
+    const timer = ctx.setTimeout(fn, delayMs);
+    return () => ctx.clearTimer(timer);
+  },
+});
+
+export default function registerDiscordPresence(omp: ExtensionAPI): void {
   let state: ActivityState = initialActivityState();
   let session: SessionContext | undefined;
+  let host: ExtensionContext | undefined;
   let scheduler: PresenceScheduler | undefined;
   let link: PresenceLink | undefined;
   let runtimeToggle: RuntimeToggle;
   let active = false;
 
-  const render = (): DesiredPresence =>
-    session ? { kind: "card", card: renderCard(toActivity(state), session) } : { kind: "cleared" };
+  // The model line reads the live session model on every render: OMP has no
+  // model_select event, and /model can change it at any point between ticks.
+  const render = (): DesiredPresence => {
+    if (!session) return { kind: "cleared" };
+    const model = modelName(shortModel(host?.models.current() ?? host?.model));
+    return { kind: "card", card: renderCard(toActivity(state), { ...session, model }) };
+  };
 
   const tick = (): void => {
     if (active && scheduler) scheduler.request(render());
@@ -53,22 +71,27 @@ export default function registerDiscordPresence(pi: ExtensionAPI): void {
 
   const start = (ctx: ExtensionContext): void => {
     if (ctx.mode !== "tui") return; // TUI only (Q9)
+    // Subagent sessions rebind extension factories; only the top-level agent
+    // owns the Discord slot.
+    if (ctx.agent.kind !== "main") return;
+    host = ctx;
     const global = loadGlobalConfig();
-    const projectOverride = ctx.isProjectTrusted() ? loadProjectConfig(ctx.cwd) : undefined;
+    // OMP has no per-directory trust gate: project-local config is always loaded.
+    const projectOverride = loadProjectConfig(ctx.cwd);
     if (!resolveEnablement({ global, projectOverride, runtimeToggle })) {
       active = false;
       return;
     }
     session = {
       project: projectNameFromCwd(ctx.cwd),
-      model: modelName(shortModel(ctx.model)),
+      model: modelName(shortModel(ctx.models.current() ?? ctx.model)),
       startedAt: epochNow(),
     };
     const transport = createXhayperTransport();
     link = createPresenceLink({ transport, clientId: global.clientId });
     const boundLink = link;
     scheduler = createScheduler({
-      clock: systemClock(),
+      clock: ctxClock(ctx),
       minIntervalMs: MIN_INTERVAL_MS,
       push: (desired) => boundLink.push(desired),
     });
@@ -89,17 +112,18 @@ export default function registerDiscordPresence(pi: ExtensionAPI): void {
     }
     active = false;
     session = undefined;
+    host = undefined;
   };
 
-  pi.on("session_start", async (_event, ctx) => {
+  omp.on("session_start", async (_event, ctx) => {
     await stop();
     start(ctx);
   });
-  pi.on("session_shutdown", async () => {
+  omp.on("session_shutdown", async () => {
     await stop();
   });
 
-  pi.on("tool_execution_start", async (event) => {
+  omp.on("tool_execution_start", async (event) => {
     state = reduce(state, {
       type: "tool_start",
       toolName: event.toolName,
@@ -107,28 +131,24 @@ export default function registerDiscordPresence(pi: ExtensionAPI): void {
     });
     tick();
   });
-  pi.on("tool_execution_end", async (event) => {
+  omp.on("tool_execution_end", async (event) => {
     state = reduce(state, { type: "tool_end", toolName: event.toolName });
     tick();
   });
-  pi.on("turn_start", async () => {
+  omp.on("turn_start", async () => {
     state = reduce(state, { type: "thinking" });
     tick();
   });
-  pi.on("turn_end", async () => {
+  omp.on("turn_end", async () => {
     state = reduce(state, { type: "turn_end" });
     tick();
   });
-  pi.on("agent_end", async () => {
+  omp.on("agent_end", async () => {
     state = reduce(state, { type: "agent_end" });
     tick();
   });
-  pi.on("model_select", async (event) => {
-    if (session) session = { ...session, model: modelName(shortModel(event.model)) };
-    tick();
-  });
 
-  pi.registerCommand("presence", {
+  omp.registerCommand("presence", {
     description: "Toggle Discord rich presence: /presence on|off|status",
     handler: async (args, ctx) => {
       const arg = (args ?? "").trim().toLowerCase();

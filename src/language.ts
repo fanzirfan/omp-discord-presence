@@ -1,5 +1,5 @@
 import type { AssetKey, FileName, LanguageIcon } from "./types.ts";
-import { PI_LOGO } from "./types.ts";
+import { OMP_LOGO } from "./types.ts";
 
 // Starter set. Each assetKey must exist as an uploaded art asset in the Discord
 // app, or it silently falls back to no small icon on Discord's side.
@@ -28,5 +28,5 @@ const ICONS: Readonly<Record<string, LanguageIcon>> = {
 export const resolveLanguage = (file: FileName): LanguageIcon => {
   const dot = file.lastIndexOf(".");
   const ext = dot >= 0 ? file.slice(dot + 1).toLowerCase() : "";
-  return ICONS[ext] ?? { label: ext ? ext.toUpperCase() : "File", assetKey: PI_LOGO };
+  return ICONS[ext] ?? { label: ext ? ext.toUpperCase() : "File", assetKey: OMP_LOGO };
 };

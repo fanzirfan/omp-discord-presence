@@ -11,7 +11,7 @@ import type {
 } from "./types.ts";
 import { err, ok, type Result } from "./result.ts";
 
-// Repo-shipped default "PI" application client id. Public value, kept in
+// Repo-shipped default "OMP" application client id. Public value, kept in
 // defaults.json (data, not source). Empty when absent → connection is a silent
 // no-op, same as Discord being unavailable.
 const FALLBACK_CLIENT_ID = "" as DiscordClientId;
@@ -31,8 +31,8 @@ const loadDefaultClientId = (): DiscordClientId => {
 
 const DEFAULT_CLIENT_ID = loadDefaultClientId();
 
-export const globalConfigPath = (): string => join(homedir(), ".pi", "agent", "discord-presence.json");
-export const projectConfigPath = (cwd: string): string => join(cwd, ".pi", "discord-presence.json");
+export const globalConfigPath = (): string => join(homedir(), ".omp", "agent", "discord-presence.json");
+export const projectConfigPath = (cwd: string): string => join(cwd, ".omp", "discord-presence.json");
 
 const readJson = (path: string): unknown => {
   try {
@@ -68,7 +68,7 @@ export const parseProjectConfig = (raw: unknown): Result<ProjectConfig, ConfigEr
 export const loadGlobalConfig = (): GlobalConfig => {
   const parsed = parseGlobalConfig(readJson(globalConfigPath()) ?? {});
   const base: GlobalConfig = parsed.ok ? parsed.value : { enabled: true, clientId: DEFAULT_CLIENT_ID };
-  const envId = process.env.PI_DISCORD_CLIENT_ID;
+  const envId = process.env.OMP_DISCORD_CLIENT_ID;
   return envId ? { ...base, clientId: envId as DiscordClientId } : base;
 };
 

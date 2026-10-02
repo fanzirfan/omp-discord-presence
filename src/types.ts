@@ -82,8 +82,8 @@ export type TransportError =
 export type ConfigError = { readonly type: "ConfigInvalid"; readonly issues: readonly string[] };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-export const PI_LOGO = "pi_logo" as AssetKey;
-export const GENERIC_ICON = "pi_logo" as AssetKey; // reuse logo to minimize required uploads
+export const OMP_LOGO = "omp_logo" as AssetKey;
+export const GENERIC_ICON = "omp_logo" as AssetKey; // reuse logo to minimize required uploads
 export const MIN_INTERVAL_MS = 15_000;
 
 // ── Smart constructors: the only place raw strings/numbers earn a brand ───────

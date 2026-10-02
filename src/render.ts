@@ -1,5 +1,5 @@
 import type { Activity, AssetKey, PresenceCard, ProjectName, SessionContext, SetActivityPayload } from "./types.ts";
-import { GENERIC_ICON, PI_LOGO } from "./types.ts";
+import { GENERIC_ICON, OMP_LOGO } from "./types.ts";
 
 const detailsFor = (a: Activity, project: ProjectName): string => {
   switch (a.kind) {
@@ -35,7 +35,7 @@ const smallIconFor = (a: Activity): { readonly key: AssetKey; readonly text: str
           ? "Web"
           : a.kind === "thinking"
             ? "Thinking"
-            : "Pi";
+            : "OMP";
   return { key: GENERIC_ICON, text };
 };
 
@@ -44,8 +44,8 @@ export const renderCard = (a: Activity, ctx: SessionContext): PresenceCard => {
   return {
     details: detailsFor(a, ctx.project),
     state: `${ctx.project} · ${ctx.model}`,
-    largeImage: PI_LOGO,
-    largeText: "Pi Coding Agent",
+    largeImage: OMP_LOGO,
+    largeText: "OMP Coding Agent",
     smallImage: small.key,
     smallText: small.text,
     startTimestamp: ctx.startedAt,
