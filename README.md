@@ -38,8 +38,10 @@ silent, so it never errors when Discord is unavailable.
 omp plugin install omp-discord-presence
 # or
 omp plugin install github:fanzirfan/omp-discord-presence
-# or, to try without installing:
-omp -e /absolute/path/to/omp-discord-presence
+# or, local dev checkout (symlinked — edit files, restart OMP, done):
+omp plugin install C:/path/to/omp-discord-presence
+# or, try without installing anything:
+omp -e C:/path/to/omp-discord-presence
 ```
 
 Or drop the repo into `~/.omp/agent/extensions/` — OMP auto-discovers it.
