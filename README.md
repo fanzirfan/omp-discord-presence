@@ -48,25 +48,44 @@ Or drop the repo into `~/.omp/agent/extensions/` — OMP auto-discovers it.
 
 The presence mirrors **what the agent is doing**:
 
-| OMP activity                 | Shows as                  |
-| ---------------------------- | ------------------------- |
-| `edit` / `write` a file      | `Editing foo.tsx`         |
-| `read` a file                | `Reading foo.tsx`         |
-| `grep` / `glob` / search     | `Searching the codebase`  |
-| `web_search` / `fetch`       | `Browsing the web`        |
-| `bash`                       | `Running: <first token>`  |
-| any other tool               | `Running <toolName>`      |
-| generating a response        | `Thinking...`             |
-| waiting for you              | `Idle in <project>`       |
+| OMP activity                 | Shows as                  | Pet clip     |
+| ---------------------------- | ------------------------- | ------------ |
+| `edit` / `write` a file      | `Editing foo.tsx`         | `typing`     |
+| `read` a file                | `Reading foo.tsx`         | `reading`    |
+| `grep` / `glob` / search     | `Searching the codebase`  | `busy`       |
+| `web_search` / `fetch`       | `Browsing the web`        | `busy`       |
+| `bash`                       | `Running: <first token>`  | `busy`       |
+| any other tool               | `Running <toolName>`      | `busy`       |
+| generating a response        | `Thinking...`             | `thinking`   |
+| waiting for you              | `Idle in <project>`       | `idle`       |
 
-The second line is `project · model`. The large image is the OMP logo; the
-small badge is the file's language icon.
+The second line is `project · model`. The large image is an animated
+NezukoCoder pet that matches what OMP is doing; the small badge is the file's
+language icon.
+
+### Animated pet
+
+The pet GIFs live in [`assets/gifs/nezukocoder/`](assets/gifs/nezukocoder),
+built from the [petdex](https://petdex.dev/pets/nezukocoder) spritesheet by
+`scripts/build-pet-gifs.ts`. Regenerate them with:
+
+```bash
+npm install
+npm run sprites                              # all clips for nezukocoder
+npm run sprites -- --pet wukong --clip idle  # a different pet, one clip
+```
+
+They are **not** uploaded as art assets — the portal only accepts PNG/JPEG/WebP
+and cannot animate. They are sent as an external URL instead, which Discord
+fetches through its media proxy and where GIF *is* supported. Nothing has to be
+uploaded for the large image at all.
 
 ## Discord app
 
-The "Playing **\<name\>**" line is your Discord application's name, and every
-image key (`omp_logo`, `ts`, `python`, …) must be uploaded as its Rich Presence
-art asset. Full walkthrough: [docs/discord-app.md](docs/discord-app.md).
+The "Playing **\<name\>**" line is your Discord application's name. Only the
+small badges are uploaded art assets (`omp_logo`, `ts`, `python`, …); the large
+pet is an external GIF URL. Full walkthrough:
+[docs/discord-app.md](docs/discord-app.md).
 
 ## Config
 
@@ -74,6 +93,13 @@ Global `~/.omp/agent/discord-presence.json`:
 
 ```json
 { "enabled": true, "clientId": "<your application id>" }
+```
+
+Optional `petBaseUrl` overrides where the pet GIFs are fetched from — use it to
+point at your own fork or static host:
+
+```json
+{ "petBaseUrl": "https://raw.githubusercontent.com/<you>/<repo>/main/assets/gifs/nezukocoder" }
 ```
 
 Per-project `<repo>/.omp/discord-presence.json` — silence a sensitive repo
@@ -101,7 +127,8 @@ Runtime: `/presence on`, `/presence off`, `/presence status`
 
 ```bash
 npm install
-npm run check   # tsc --noEmit
+npm run check     # tsc --noEmit
+npm run sprites   # rebuild the pet GIFs from the petdex spritesheet
 ```
 
 ```
@@ -116,6 +143,7 @@ src/scheduler.ts    Clock + coalesce/trailing-flush rate limiter
 src/transport.ts    DiscordTransport seam + @xhayper adapter
 src/link.ts         connection state machine + lazy reconnect
 src/extension.ts    wires OMP events → reducer → scheduler
+scripts/build-pet-gifs.ts  petdex spritesheet → animated GIF art assets
 ```
 
 ## License

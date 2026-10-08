@@ -86,6 +86,7 @@ export default function registerDiscordPresence(omp: ExtensionAPI): void {
       project: projectNameFromCwd(ctx.cwd),
       model: modelName(shortModel(ctx.models.current() ?? ctx.model)),
       startedAt: epochNow(),
+      petBaseUrl: global.petBaseUrl,
     };
     const transport = createXhayperTransport();
     link = createPresenceLink({ transport, clientId: global.clientId });

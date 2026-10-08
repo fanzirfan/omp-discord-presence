@@ -1,5 +1,5 @@
-import type { Activity, AssetKey, PresenceCard, ProjectName, SessionContext, SetActivityPayload } from "./types.ts";
-import { GENERIC_ICON, OMP_LOGO } from "./types.ts";
+import type { Activity, AssetKey, PetClip, PresenceCard, ProjectName, SessionContext, SetActivityPayload } from "./types.ts";
+import { GENERIC_ICON, petImageUrl } from "./types.ts";
 
 const detailsFor = (a: Activity, project: ProjectName): string => {
   switch (a.kind) {
@@ -39,12 +39,31 @@ const smallIconFor = (a: Activity): { readonly key: AssetKey; readonly text: str
   return { key: GENERIC_ICON, text };
 };
 
+/** Which pet animation matches what the agent is doing. */
+const petClipFor = (a: Activity): PetClip => {
+  switch (a.kind) {
+    case "editing":
+      return "typing";
+    case "reading":
+      return "reading";
+    case "searching":
+    case "browsing":
+    case "running":
+    case "tool":
+      return "busy";
+    case "thinking":
+      return "thinking";
+    case "idle":
+      return "idle";
+  }
+};
+
 export const renderCard = (a: Activity, ctx: SessionContext): PresenceCard => {
   const small = smallIconFor(a);
   return {
     details: detailsFor(a, ctx.project),
     state: `${ctx.project} · ${ctx.model}`,
-    largeImage: OMP_LOGO,
+    largeImage: petImageUrl(ctx.petBaseUrl, petClipFor(a)),
     largeText: "OMP Coding Agent",
     smallImage: small.key,
     smallText: small.text,

@@ -9,6 +9,7 @@ import type {
   ProjectConfig,
   RuntimeToggle,
 } from "./types.ts";
+import { DEFAULT_PET_BASE_URL, petBaseUrlFrom } from "./types.ts";
 import { err, ok, type Result } from "./result.ts";
 
 // Repo-shipped default "OMP" application client id. Public value, kept in
@@ -50,10 +51,15 @@ export const parseGlobalConfig = (raw: unknown): Result<GlobalConfig, ConfigErro
   const issues: string[] = [];
   if (obj.enabled !== undefined && typeof obj.enabled !== "boolean") issues.push("enabled must be a boolean");
   if (obj.clientId !== undefined && typeof obj.clientId !== "string") issues.push("clientId must be a string");
+  if (obj.petBaseUrl !== undefined && typeof obj.petBaseUrl !== "string") issues.push("petBaseUrl must be a string");
   if (issues.length > 0) return err({ type: "ConfigInvalid", issues });
   const enabled = typeof obj.enabled === "boolean" ? obj.enabled : true;
   const clientId = (typeof obj.clientId === "string" ? obj.clientId : DEFAULT_CLIENT_ID) as DiscordClientId;
-  return ok({ enabled, clientId });
+  const petBaseUrl =
+    typeof obj.petBaseUrl === "string" && obj.petBaseUrl.length > 0
+      ? petBaseUrlFrom(obj.petBaseUrl)
+      : DEFAULT_PET_BASE_URL;
+  return ok({ enabled, clientId, petBaseUrl });
 };
 
 export const parseProjectConfig = (raw: unknown): Result<ProjectConfig, ConfigError> => {
@@ -67,7 +73,9 @@ export const parseProjectConfig = (raw: unknown): Result<ProjectConfig, ConfigEr
 // Boundary loaders: read file, parse, apply env override (env > file > default).
 export const loadGlobalConfig = (): GlobalConfig => {
   const parsed = parseGlobalConfig(readJson(globalConfigPath()) ?? {});
-  const base: GlobalConfig = parsed.ok ? parsed.value : { enabled: true, clientId: DEFAULT_CLIENT_ID };
+  const base: GlobalConfig = parsed.ok
+    ? parsed.value
+    : { enabled: true, clientId: DEFAULT_CLIENT_ID, petBaseUrl: DEFAULT_PET_BASE_URL };
   const envId = process.env.OMP_DISCORD_CLIENT_ID;
   return envId ? { ...base, clientId: envId as DiscordClientId } : base;
 };

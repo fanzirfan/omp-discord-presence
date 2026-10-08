@@ -11,6 +11,7 @@ export type ModelName = Brand<string, "ModelName">; // short display name
 export type BashHead = Brand<string, "BashHead">; // first command token, no args
 export type AssetKey = Brand<string, "AssetKey">; // Discord art-asset key
 export type EpochMillis = Brand<number, "EpochMillis">;
+export type ImageRef = Brand<string, "ImageRef">; // uploaded asset key OR external URL
 
 export interface LanguageIcon {
   readonly label: string;
@@ -33,13 +34,14 @@ export interface SessionContext {
   readonly project: ProjectName;
   readonly model: ModelName;
   readonly startedAt: EpochMillis; // stable; drives the continuous elapsed timer
+  readonly petBaseUrl: PetBaseUrl; // where the animated pet GIFs live
 }
 
 // ── Card + wire payload ───────────────────────────────────────────────────────
 export interface PresenceCard {
   readonly details: string; // activity line
   readonly state: string; // "project · model"
-  readonly largeImage: AssetKey;
+  readonly largeImage: ImageRef;
   readonly largeText: string;
   readonly smallImage: AssetKey;
   readonly smallText: string;
@@ -65,6 +67,7 @@ export interface SetActivityPayload {
 export interface GlobalConfig {
   readonly enabled: boolean;
   readonly clientId: DiscordClientId;
+  readonly petBaseUrl: PetBaseUrl; // never undefined: defaults to the published GIFs
 }
 export interface ProjectConfig {
   readonly enabled?: boolean;
@@ -84,6 +87,18 @@ export type ConfigError = { readonly type: "ConfigInvalid"; readonly issues: rea
 // ── Constants ─────────────────────────────────────────────────────────────────
 export const OMP_LOGO = "omp_logo" as AssetKey;
 export const GENERIC_ICON = "omp_logo" as AssetKey; // reuse logo to minimize required uploads
+
+// ── Animated pet art ──────────────────────────────────────────────────────────
+// Uploaded art assets only accept PNG/JPEG/WebP and cannot animate, so the pet
+// is referenced by external URL instead: Discord's media proxy fetches those
+// itself and does support GIF. There are no `nezuko_*` asset keys any more.
+export type PetClip = "idle" | "typing" | "reading" | "busy" | "thinking";
+export type PetBaseUrl = Brand<string, "PetBaseUrl">;
+
+/** Where the pet GIFs are published. Override for forks or self-hosting. */
+export const DEFAULT_PET_BASE_URL =
+  "https://raw.githubusercontent.com/fanzirfan/omp-discord-presence/main/assets/gifs/nezukocoder" as PetBaseUrl;
+
 export const MIN_INTERVAL_MS = 15_000;
 
 // ── Smart constructors: the only place raw strings/numbers earn a brand ───────
@@ -101,3 +116,10 @@ export const bashHead = (command: string): BashHead => {
   const first = tokens.find((t) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(t)) ?? tokens[0] ?? "";
   return (basename(first) || first) as BashHead;
 };
+
+/** Normalise a user-supplied base URL so trailing slashes cannot double up. */
+export const petBaseUrlFrom = (raw: string): PetBaseUrl => raw.replace(/\/+$/, "") as PetBaseUrl;
+
+/** Absolute URL for one pet clip. Discord's media proxy fetches this itself. */
+export const petImageUrl = (base: PetBaseUrl, clip: PetClip): ImageRef =>
+  `${base}/${clip}.gif` as ImageRef;
