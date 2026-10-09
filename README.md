@@ -1,10 +1,9 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/fanzirfan/omp-discord-presence/main/assets/banner.png" alt="omp-discord-presence" width="100%">
+<img src="https://raw.githubusercontent.com/fanzirfan/omp-discord-presence/main/assets/banner.svg" alt="omp-discord-presence" width="100%">
 
 [![License](https://img.shields.io/badge/license-MIT-111111?style=flat-square)](./LICENSE)
 [![OMP extension](https://img.shields.io/badge/omp-extension-111111?style=flat-square)](https://omp.sh)
-[![npm](https://img.shields.io/npm/v/omp-discord-presence?style=flat-square&color=111111&logo=npm)](https://www.npmjs.com/package/omp-discord-presence)
 [![GitHub](https://img.shields.io/badge/github-fanzirfan%2Fomp--discord--presence-111111?style=flat-square&logo=github)](https://github.com/fanzirfan/omp-discord-presence)
 
 </div>
@@ -34,14 +33,28 @@ silent, so it never errors when Discord is unavailable.
 
 ## Install
 
+There is no npm package — this repo is the package. Install it straight from
+GitHub:
+
 ```bash
-omp plugin install omp-discord-presence
-# or
 omp plugin install github:fanzirfan/omp-discord-presence
-# or, local dev checkout (symlinked — edit files, restart OMP, done):
-omp plugin install C:/path/to/omp-discord-presence
-# or, try without installing anything:
+```
+
+That is the whole installation. It lands in
+`~/.omp/plugins/node_modules/omp-discord-presence`; OMP picks it up on restart.
+
+**Without installing anything** (runs the repo in place):
+
+```bash
 omp -e C:/path/to/omp-discord-presence
+```
+
+**Developing on it** — clone anywhere and pass the directory. OMP links it, so
+edits take effect on the next restart:
+
+```bash
+git clone https://github.com/fanzirfan/omp-discord-presence.git
+omp plugin install C:/path/to/omp-discord-presence
 ```
 
 Or drop the repo into `~/.omp/agent/extensions/` — OMP auto-discovers it.

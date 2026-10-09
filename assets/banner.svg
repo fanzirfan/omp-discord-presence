@@ -43,5 +43,5 @@
   <text x="429" y="266" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="18" letter-spacing="1" fill="#9b4dff">EXTENSION</text>
 
   <!-- install line -->
-  <text x="362" y="335" xml:space="preserve" font-family="ui-monospace, Menlo, monospace" font-size="24" fill="#6e7681"><tspan fill="#9b4dff">$ </tspan>omp plugin install npm:omp-discord-presence</text>
+  <text x="362" y="335" xml:space="preserve" font-family="ui-monospace, Menlo, monospace" font-size="24" fill="#6e7681"><tspan fill="#9b4dff">$ </tspan>omp plugin install github:fanzirfan/omp-discord-presence</text>
 </svg>
